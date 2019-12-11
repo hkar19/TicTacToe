@@ -29,11 +29,11 @@ class Square extends React.Component {
 
 class Board extends React.Component {
   renderSquare(i) {
-    const lastMove = this.props.prevMove[this.props.prevMove.length-1];
-    const col = lastMove[0];
-    const row = lastMove[1];
-    const aNumber = row*3+col;
-    const isLastMove = (i===aNumber);
+    const lastMove = this.props.lastMove;
+    // const col = lastMove[0];
+    // const row = lastMove[1];
+    // const aNumber = row*3+col;
+    const isLastMove = (i===lastMove);
     const isWinningLines = this.props.winningLine ? (this.props.winningLine[0]===i||this.props.winningLine[1]===i||this.props.winningLine[2]===i):false;
 
     return <Square
@@ -73,7 +73,7 @@ class Game extends React.Component {
         }],
       xIsNext: true,
       stepNumber: 0,
-      prevMove: [[null,null]],
+      prevMoves: [[]],
       isAscending: true,
     }
   }
@@ -89,10 +89,10 @@ class Game extends React.Component {
     const history = this.state.history.slice(0,this.state.stepNumber+1);
     const current = history[history.length-1];
     const squares = current.squares.slice();
-    const prevMove = this.state.prevMove.slice(0,this.state.stepNumber+1);
+    const prevMoves = this.state.prevMoves.slice(0,this.state.stepNumber+1);
 
-    const col = i%3;
-    const row = Math.floor(i/3);
+    // const col = i%3;
+    // const row = Math.floor(i/3);
     if (calculateWinner(squares)[0] || squares[i]) {
       return;
     }
@@ -104,7 +104,7 @@ class Game extends React.Component {
       ]),
       xIsNext: !this.state.xIsNext,
       stepNumber: history.length,
-      prevMove: prevMove.concat([[col,row]]),
+      prevMoves: prevMoves.concat([i]),
       });
   }
 
@@ -120,15 +120,18 @@ class Game extends React.Component {
     const current = history[this.state.stepNumber];
     const winner = calculateWinner(current.squares)[0];
     const winningLine = calculateWinner(current.squares)[1];
-    const prevMove = this.state.prevMove.slice(0,this.state.stepNumber+1);
-    // console.log(prevMove);
+    const prevMoves = this.state.prevMoves.slice(0,this.state.stepNumber+1);
+    // console.log(prevMoves);
 
     const Ascending = this.state.isAscending ? 'ascending':'descending';
 
     const Moves=[];
     if(this.state.isAscending){
       for(let i = 0;i<history.length;i++){
-        const Desc = i ? ('Go to move #'+i+' '+ ((i%2)===1 ? 'X ':'O ')+' on '+this.state.prevMove[i]) : ('Go to game start');
+        const col = this.state.prevMoves[i]%3;
+        const row = Math.floor(this.state.prevMoves[i]/3);
+
+        const Desc = i ? ('Go to move #'+i+' '+ ((i%2)===1 ? 'X ':'O ')+' on '+col+','+row) : ('Go to game start');
         Moves.push(
           <li key={i}>
             <button onClick= {()=> this.jumpTo(i)}>
@@ -140,7 +143,10 @@ class Game extends React.Component {
     }
     else{
       for(let i = history.length-1;i>=0;i--){
-        const Desc = i ? ('Go to move #'+i+' '+ ((i%2)===1 ? 'X ':'O ')+' on '+this.state.prevMove[i]) : ('Go to game start');
+        const col = this.state.prevMoves[i]%3;
+        const row = Math.floor(this.state.prevMoves[i]/3);
+
+        const Desc = i ? ('Go to move #'+i+' '+ ((i%2)===1 ? 'X ':'O ')+' on '+col+','+row) : ('Go to game start');
         Moves.push(
           <li key={i}>
             <button onClick= {()=> this.jumpTo(i)}>
@@ -152,15 +158,9 @@ class Game extends React.Component {
     }
 
     let Status;
-    if (winner) {
-      Status = 'Winner: ' + winner;
-    }
-    else if (this.state.stepNumber ===9) {
-      Status = 'It is DRAW';
-    }
-    else {
-      Status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
-    }
+    if (winner)                           Status = 'Winner: ' + winner;
+    else if (this.state.stepNumber ===9)  Status = 'It is DRAW';
+    else                                  Status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
 
     return (
       <div className="game">
@@ -168,7 +168,7 @@ class Game extends React.Component {
           <Board
             squares={current.squares}
             onClick={(i) => this.handleClick(i)}
-            prevMove={prevMove}
+            lastMove={prevMoves[prevMoves.length-1]}
             winningLine={winningLine}
             />
         </div>
